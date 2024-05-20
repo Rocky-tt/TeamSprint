@@ -1,19 +1,9 @@
-// Copyright 2023 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// The function below is executed in the context of the inspected page.
-/*global $0*/
+  let reqInfo = {};
+  let i = 0;
+  //새로고침시 reqInfo 초기화 
+  chrome.devtools.network.onNavigated.addListener(()=> {
+    reqInfo = {};
+  });
 
   chrome.devtools.network.onRequestFinished.addListener(
     function(request) {
@@ -22,25 +12,34 @@
         const url = request.request.url
         if(request.request.postData){
             const postText = request.request.postData.text;
-
+            const url = request.request.url;
             var paramObject = {};
             var keyValuePairs = postText.split('&');
 
             // 각 키-값 쌍을 추출하여 객체에 추가
+            /*
             keyValuePairs.forEach(function(pair) {
                 var keyValue = pair.split('=');
                 if(keyValue[0] !== '_metaToken'){
                     paramObject[keyValue[0]] = keyValue[1];    
                 } 
-            });
-            chrome.devtools.inspectedWindow.eval(`console.log(\`${Object.keys(paramObject)}\`)`);
+            });*/
+
+            if(url === "https://collector.github.com/github/collect"){
+              chrome.runtime.sendMessage({message: {url:postText}});
+              chrome.devtools.inspectedWindow.eval(`chrome.runtime.sendMessage({ action: "request", url:url})`);
+              
+              chrome.devtools.inspectedWindow.eval(`console.log(\`${reqInfo}\`)`);
+            
+              //reqInfo[url]=postText;
+            }
+            //chrome.runtime.sendMessage({ action: "page_refreshed", url: url });
+            
+            //chrome.devtools.inspectedWindow.eval(`console.log(\`${i}\`)`);
           }
        }
     }
 );
-
-
-
 
   /* const url = request.request.url;
     const method = request.request.method;
